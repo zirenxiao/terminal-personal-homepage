@@ -5,7 +5,7 @@ A terminal-style **single HTML file** personal profile webpage with multi-tab su
 ## Usage
 
 1. Download `index.html`
-2. Revise content in `CONFIG`
+2. Revise content in `CONFIG` and `commandConfig`
 3. Revise other content if you like
 4. Upload to static hosting
 5. GO!
