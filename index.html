@@ -41,67 +41,6 @@
       width: min(1120px, 100%);
     }
 
-    .tab-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .tab {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--panel-2);
-      color: var(--muted);
-      cursor: pointer;
-      user-select: none;
-      min-width: 0;
-      max-width: 240px;
-    }
-
-    .tab.active {
-      background: var(--panel-3);
-      color: var(--text);
-    }
-
-    .tab-title {
-      min-width: 56px;
-      padding: 2px 4px;
-      border-radius: 4px;
-      outline: none;
-      user-select: text;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .tab-title:focus {
-      background: rgba(121, 192, 255, 0.14);
-    }
-
-    .tab-close {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .new-tab-btn {
-      padding: 10px 14px;
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      background: transparent;
-      color: var(--muted);
-      font: inherit;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
     .terminal {
       width: 100%;
       min-height: 620px;
@@ -391,29 +330,6 @@
         width: 100%;
       }
 
-      .tab-bar {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        scrollbar-width: none;
-      }
-
-      .tab-bar::-webkit-scrollbar {
-        display: none;
-      }
-
-      .tab {
-        flex: 0 0 auto;
-        max-width: 180px;
-        padding: 8px 10px;
-        border-radius: 9px;
-      }
-
-      .new-tab-btn {
-        flex: 0 0 auto;
-        padding: 8px 10px;
-      }
-
       .terminal {
         border-radius: 10px;
       }
@@ -478,7 +394,6 @@
         padding: 10px;
       }
 
-      /* 手机端：表格变终端风格卡片 */
       .data-table,
       .data-table thead,
       .data-table tbody,
@@ -537,14 +452,12 @@
 </head>
 <body>
   <div class="workspace">
-    <div class="tab-bar" id="tabBar"></div>
-
     <div class="terminal">
       <div class="terminal-header">
         <span class="dot red"></span>
         <span class="dot yellow"></span>
         <span class="dot green"></span>
-        <span class="terminal-title" id="terminalTitle">terminal-profile-system — terminal-1</span>
+        <span class="terminal-title" id="terminalTitle">terminal-profile-system</span>
       </div>
 
       <div class="terminal-body" id="terminalBody">
@@ -567,7 +480,6 @@
   <script>
     var CONFIG = {
       appTitle: 'terminal-profile-system',
-      defaultTabTitlePrefix: 'terminal-',
       promptText: 'user@terminal-profile:~$',
       terminalWelcome: 'Welcome to Terminal Profile System v1.0.0 (GNU/Linux profile-shell x86_64)',
       loginIpApi: 'https://api.ipify.org?format=json',
@@ -707,7 +619,6 @@
     var input = document.getElementById('commandInput');
     var historyEl = document.getElementById('history');
     var terminalBody = document.getElementById('terminalBody');
-    var tabBar = document.getElementById('tabBar');
     var terminalTitle = document.getElementById('terminalTitle');
     var inputRow = document.getElementById('inputRow');
     var inputWrapper = document.getElementById('inputWrapper');
@@ -720,6 +631,14 @@
       selectedIndex: -1
     };
     var terminalPointerDown = null;
+
+    var terminalState = {
+      bodyEntries: [],
+      inputValue: '',
+      commandHistory: [],
+      historyIndex: 0,
+      draftInput: ''
+    };
 
     function escapeHtml(text) {
       return String(text)
@@ -901,40 +820,6 @@
       return result;
     }
 
-    function createTerminalState(id) {
-      return {
-        id: id,
-        title: CONFIG.defaultTabTitlePrefix + id,
-        bodyEntries: [],
-        inputValue: '',
-        commandHistory: [],
-        historyIndex: 0,
-        draftInput: ''
-      };
-    }
-
-    var terminals = [createTerminalState(1)];
-    var activeTerminalId = 1;
-    var nextTerminalId = 2;
-
-    function getActiveTerminal() {
-      for (var i = 0; i < terminals.length; i += 1) {
-        if (terminals[i].id === activeTerminalId) return terminals[i];
-      }
-      return terminals[0];
-    }
-
-    function getTerminalById(id) {
-      for (var i = 0; i < terminals.length; i += 1) {
-        if (terminals[i].id === id) return terminals[i];
-      }
-      return null;
-    }
-
-    function getRenderedEntries(terminal) {
-      return getBannerEntries().concat(terminal.bodyEntries);
-    }
-
     function appendEntry(entry) {
       var line = document.createElement('div');
       line.className = 'line ' + (entry.className || 'output');
@@ -947,8 +832,7 @@
     }
 
     function renderHistory() {
-      var terminal = getActiveTerminal();
-      var entries = getRenderedEntries(terminal);
+      var entries = getBannerEntries().concat(terminalState.bodyEntries);
       historyEl.innerHTML = '';
 
       for (var i = 0; i < entries.length; i += 1) {
@@ -958,134 +842,20 @@
       terminalBody.scrollTop = terminalBody.scrollHeight;
     }
 
-    function renderTabs() {
-      tabBar.innerHTML = '';
-
-      for (var i = 0; i < terminals.length; i += 1) {
-        (function(terminal) {
-          var tab = document.createElement('div');
-          tab.className = 'tab' + (terminal.id === activeTerminalId ? ' active' : '');
-
-          var title = document.createElement('span');
-          title.className = 'tab-title';
-          title.contentEditable = 'true';
-          title.spellcheck = false;
-          title.textContent = terminal.title;
-
-          title.addEventListener('mousedown', function(event) {
-            event.stopPropagation();
-          });
-
-          title.addEventListener('click', function(event) {
-            event.stopPropagation();
-          });
-
-          title.addEventListener('focus', function() {
-            activeTerminalId = terminal.id;
-            terminalTitle.textContent = CONFIG.appTitle + ' — ' + terminal.title;
-            renderTabs();
-          });
-
-          title.addEventListener('input', function() {
-            terminal.title = title.textContent.trim() || (CONFIG.defaultTabTitlePrefix + terminal.id);
-            terminalTitle.textContent = CONFIG.appTitle + ' — ' + terminal.title;
-          });
-
-          title.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              title.blur();
-            }
-          });
-
-          title.addEventListener('blur', function() {
-            terminal.title = title.textContent.trim() || (CONFIG.defaultTabTitlePrefix + terminal.id);
-            renderTabs();
-          });
-
-          tab.addEventListener('click', function() {
-            activeTerminalId = terminal.id;
-            renderActiveTerminal();
-            focusCommandInput();
-          });
-
-          tab.appendChild(title);
-
-          if (terminals.length > 1) {
-            var close = document.createElement('span');
-            close.className = 'tab-close';
-            close.textContent = '×';
-            close.addEventListener('click', function(event) {
-              event.stopPropagation();
-              closeTab(terminal.id);
-            });
-            tab.appendChild(close);
-          }
-
-          tabBar.appendChild(tab);
-        })(terminals[i]);
-      }
-
-      var addBtn = document.createElement('button');
-      addBtn.className = 'new-tab-btn';
-      addBtn.textContent = '+ New Terminal';
-      addBtn.addEventListener('click', createNewTab);
-      tabBar.appendChild(addBtn);
-    }
-
-    function renderActiveTerminal() {
-      var terminal = getActiveTerminal();
-      terminalTitle.textContent = CONFIG.appTitle + ' — ' + terminal.title;
-      input.value = terminal.inputValue;
-      renderTabs();
-      renderHistory();
-      hideAutocomplete();
-    }
-
-    function createNewTab() {
-      var terminal = createTerminalState(nextTerminalId);
-      nextTerminalId += 1;
-      terminals.push(terminal);
-      activeTerminalId = terminal.id;
-      renderActiveTerminal();
-      focusCommandInput();
-    }
-
-    function closeTab(id) {
-      if (terminals.length === 1) return;
-
-      for (var i = 0; i < terminals.length; i += 1) {
-        if (terminals[i].id === id) {
-          terminals.splice(i, 1);
-          break;
-        }
-      }
-
-      if (!getTerminalById(activeTerminalId)) {
-        activeTerminalId = terminals[0].id;
-      }
-
-      renderActiveTerminal();
-      focusCommandInput();
-    }
-
     function pushBodyEntry(entry) {
-      var terminal = getActiveTerminal();
-      terminal.bodyEntries.push(entry);
+      terminalState.bodyEntries.push(entry);
       appendEntry(entry);
       terminalBody.scrollTop = terminalBody.scrollHeight;
     }
 
     function setCurrentInputValue(value) {
-      var terminal = getActiveTerminal();
-      terminal.inputValue = value;
+      terminalState.inputValue = value;
       input.value = value;
       updateAutocomplete();
     }
 
     function clearTerminal() {
-      var terminal = getActiveTerminal();
-      terminal.bodyEntries = [];
+      terminalState.bodyEntries = [];
       renderHistory();
     }
 
@@ -1155,10 +925,6 @@
       if (!target) return false;
       return Boolean(
         target.closest('.command-input') ||
-        target.closest('.tab') ||
-        target.closest('.tab-title') ||
-        target.closest('.tab-close') ||
-        target.closest('.new-tab-btn') ||
         target.closest('.autocomplete') ||
         target.closest('.banner-command') ||
         target.closest('.table-command') ||
@@ -1244,8 +1010,7 @@
 
     function updateAutocomplete() {
       var value = input.value || '';
-      var terminal = getActiveTerminal();
-      terminal.inputValue = value;
+      terminalState.inputValue = value;
 
       if (!CONFIG.enableAutocomplete) {
         hideAutocomplete();
@@ -1276,8 +1041,7 @@
     }
 
     function executeCommand(command) {
-      var terminal = getActiveTerminal();
-      terminal.inputValue = '';
+      terminalState.inputValue = '';
       input.value = '';
       hideAutocomplete();
       handleCommand(command);
@@ -1298,10 +1062,9 @@
         return;
       }
 
-      var terminal = getActiveTerminal();
-      terminal.commandHistory.push(commandText);
-      terminal.historyIndex = terminal.commandHistory.length;
-      terminal.draftInput = '';
+      terminalState.commandHistory.push(commandText);
+      terminalState.historyIndex = terminalState.commandHistory.length;
+      terminalState.draftInput = '';
 
       var parts = commandText.split(/\s+/);
       var baseCommand = parts[0];
@@ -1349,13 +1112,11 @@
     }
 
     input.addEventListener('input', function() {
-      getActiveTerminal().inputValue = input.value;
+      terminalState.inputValue = input.value;
       updateAutocomplete();
     });
 
     input.addEventListener('keydown', function(event) {
-      var terminal = getActiveTerminal();
-
       if (event.key === 'Tab') {
         if (autocompleteState.items.length) {
           event.preventDefault();
@@ -1378,12 +1139,12 @@
         }
 
         event.preventDefault();
-        if (!terminal.commandHistory.length) return;
-        if (terminal.historyIndex === terminal.commandHistory.length) {
-          terminal.draftInput = input.value;
+        if (!terminalState.commandHistory.length) return;
+        if (terminalState.historyIndex === terminalState.commandHistory.length) {
+          terminalState.draftInput = input.value;
         }
-        terminal.historyIndex = Math.max(0, terminal.historyIndex - 1);
-        setCurrentInputValue(terminal.commandHistory[terminal.historyIndex] || '');
+        terminalState.historyIndex = Math.max(0, terminalState.historyIndex - 1);
+        setCurrentInputValue(terminalState.commandHistory[terminalState.historyIndex] || '');
         return;
       }
 
@@ -1399,12 +1160,12 @@
         }
 
         event.preventDefault();
-        if (!terminal.commandHistory.length) return;
-        terminal.historyIndex = Math.min(terminal.commandHistory.length, terminal.historyIndex + 1);
-        if (terminal.historyIndex === terminal.commandHistory.length) {
-          setCurrentInputValue(terminal.draftInput || '');
+        if (!terminalState.commandHistory.length) return;
+        terminalState.historyIndex = Math.min(terminalState.commandHistory.length, terminalState.historyIndex + 1);
+        if (terminalState.historyIndex === terminalState.commandHistory.length) {
+          setCurrentInputValue(terminalState.draftInput || '');
         } else {
-          setCurrentInputValue(terminal.commandHistory[terminal.historyIndex] || '');
+          setCurrentInputValue(terminalState.commandHistory[terminalState.historyIndex] || '');
         }
         return;
       }
@@ -1422,7 +1183,7 @@
         }
 
         var commandText = input.value;
-        terminal.inputValue = '';
+        terminalState.inputValue = '';
         input.value = '';
         hideAutocomplete();
         handleCommand(commandText);
@@ -1480,8 +1241,8 @@
       }
     });
 
-    function refreshAllTerminals() {
-      renderActiveTerminal();
+    function refreshTerminal() {
+      renderHistory();
     }
 
     function fetchLoginIp() {
@@ -1492,16 +1253,16 @@
         .then(function(data) {
           if (data && data.ip) {
             loginIp = data.ip;
-            refreshAllTerminals();
+            refreshTerminal();
           }
         })
         .catch(function() {
           loginIp = 'unavailable';
-          refreshAllTerminals();
+          refreshTerminal();
         });
     }
 
-    renderActiveTerminal();
+    renderHistory();
     fetchLoginIp();
     focusCommandInput();
   </script>
