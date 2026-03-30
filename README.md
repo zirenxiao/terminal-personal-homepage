@@ -4,7 +4,7 @@ A terminal-style **single HTML file** personal profile webpage with multi-tab su
 
 ## Demo
 
-[My GitHub.io page](https://12z.uk/)
+[GitHub.io Demo](https://zirenxiao.github.io/terminal-personal-homepage/)
 
 ## Usage
 
