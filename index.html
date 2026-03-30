@@ -9,11 +9,27 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-2: #11161d;
+      --panel-3: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #7ee787;
+      --blue: #79c0ff;
+      --yellow: #e3b341;
+      --purple: #d2a8ff;
+      --red: #ff7b72;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      background: #0d1117;
-      color: #e6edf3;
+      background: var(--bg);
+      color: var(--text);
       font-family: Consolas, Monaco, "Courier New", monospace;
       display: flex;
       align-items: center;
@@ -38,17 +54,19 @@
       align-items: center;
       gap: 8px;
       padding: 10px 14px;
-      border: 1px solid #30363d;
+      border: 1px solid var(--border);
       border-radius: 10px;
-      background: #11161d;
-      color: #8b949e;
+      background: var(--panel-2);
+      color: var(--muted);
       cursor: pointer;
       user-select: none;
+      min-width: 0;
+      max-width: 240px;
     }
 
     .tab.active {
-      background: #21262d;
-      color: #e6edf3;
+      background: var(--panel-3);
+      color: var(--text);
     }
 
     .tab-title {
@@ -57,6 +75,9 @@
       border-radius: 4px;
       outline: none;
       user-select: text;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .tab-title:focus {
@@ -64,29 +85,31 @@
     }
 
     .tab-close {
-      color: #8b949e;
+      color: var(--muted);
       font-size: 12px;
       line-height: 1;
+      flex-shrink: 0;
     }
 
     .new-tab-btn {
       padding: 10px 14px;
-      border: 1px dashed #30363d;
+      border: 1px dashed var(--border);
       border-radius: 10px;
       background: transparent;
-      color: #8b949e;
+      color: var(--muted);
       font: inherit;
       cursor: pointer;
+      white-space: nowrap;
     }
 
     .terminal {
       width: 100%;
       min-height: 620px;
-      background: #161b22;
-      border: 1px solid #30363d;
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      box-shadow: var(--shadow);
     }
 
     .terminal-header {
@@ -94,14 +117,16 @@
       align-items: center;
       gap: 8px;
       padding: 14px 16px;
-      background: #21262d;
-      border-bottom: 1px solid #30363d;
+      background: var(--panel-3);
+      border-bottom: 1px solid var(--border);
+      min-width: 0;
     }
 
     .dot {
       width: 12px;
       height: 12px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
 
     .dot.red { background: #ff5f56; }
@@ -110,8 +135,12 @@
 
     .terminal-title {
       margin-left: 8px;
-      color: #8b949e;
+      color: var(--muted);
       font-size: 14px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .terminal-body {
@@ -138,32 +167,33 @@
     }
 
     .prompt-line {
-      color: #7ee787;
+      color: var(--green);
     }
 
     .prompt {
-      color: #7ee787;
+      color: var(--green);
       flex-shrink: 0;
     }
 
     .output {
-      color: #e6edf3;
+      color: var(--text);
     }
 
     .hint {
-      color: #8b949e;
+      color: var(--muted);
     }
 
     .error {
-      color: #ff7b72;
+      color: var(--red);
     }
 
-    .banner-command {
+    .banner-command,
+    .table-command {
       display: inline;
       padding: 0;
       border: none;
       background: transparent;
-      color: #7ee787;
+      color: var(--green);
       font: inherit;
       font-weight: 700;
       cursor: pointer;
@@ -171,18 +201,20 @@
       text-underline-offset: 2px;
     }
 
-    .banner-command:hover {
+    .banner-command:hover,
+    .table-command:hover {
       color: #a5f3ad;
     }
 
-    .banner-command:focus-visible {
-      outline: 1px solid #7ee787;
+    .banner-command:focus-visible,
+    .table-command:focus-visible {
+      outline: 1px solid var(--green);
       outline-offset: 2px;
       border-radius: 2px;
     }
 
     .banner-link {
-      color: #79c0ff;
+      color: var(--blue);
       text-decoration: none;
       word-break: break-all;
     }
@@ -202,6 +234,7 @@
       gap: 10px;
       position: relative;
       z-index: 2;
+      min-width: 0;
     }
 
     .command-input {
@@ -209,10 +242,10 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #e6edf3;
+      color: var(--text);
       font: inherit;
       font-size: 16px;
-      caret-color: #7ee787;
+      caret-color: var(--green);
       min-width: 0;
     }
 
@@ -221,8 +254,8 @@
       left: 0;
       bottom: calc(100% + 8px);
       width: min(420px, calc(100vw - 80px));
-      background: #11161d;
-      border: 1px solid #30363d;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
@@ -262,31 +295,31 @@
 
     .autocomplete-item:hover,
     .autocomplete-item.active {
-      background: #21262d;
+      background: var(--panel-3);
     }
 
     .autocomplete-name {
-      color: #79c0ff;
+      color: var(--blue);
       font-weight: 700;
     }
 
     .autocomplete-desc {
-      color: #8b949e;
+      color: var(--muted);
       min-width: 0;
       line-height: 1.4;
     }
 
     .cmd {
-      color: #79c0ff;
+      color: var(--blue);
       font-weight: 700;
     }
 
     .flag {
-      color: #e3b341;
+      color: var(--yellow);
     }
 
     .value {
-      color: #d2a8ff;
+      color: var(--purple);
     }
 
     .data-table {
@@ -300,18 +333,23 @@
       text-align: left;
       vertical-align: top;
       padding: 8px 14px 8px 0;
-      border-bottom: 1px solid #30363d;
+      border-bottom: 1px solid var(--border);
       word-break: break-word;
     }
 
     .data-table th {
-      color: #7ee787;
+      color: var(--green);
       font-weight: 700;
     }
 
     .data-table td:first-child,
     .data-table th:first-child {
-      color: #79c0ff;
+      color: var(--blue);
+    }
+
+    .table-command {
+      color: var(--blue);
+      text-decoration: underline;
     }
 
     .ref-list {
@@ -321,16 +359,113 @@
     }
 
     .ref-index {
-      color: #79c0ff;
+      color: var(--blue);
     }
 
     .ref-text {
-      color: #e6edf3;
+      color: var(--text);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+        align-items: stretch;
+      }
+
+      .terminal {
+        min-height: auto;
+      }
+
+      .terminal-body {
+        height: 72vh;
+        padding: 16px 14px;
+      }
     }
 
     @media (max-width: 640px) {
+      body {
+        padding: 8px;
+      }
+
+      .workspace {
+        width: 100%;
+      }
+
+      .tab-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+
+      .tab-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab {
+        flex: 0 0 auto;
+        max-width: 180px;
+        padding: 8px 10px;
+        border-radius: 9px;
+      }
+
+      .new-tab-btn {
+        flex: 0 0 auto;
+        padding: 8px 10px;
+      }
+
+      .terminal {
+        border-radius: 10px;
+      }
+
+      .terminal-header {
+        padding: 10px 12px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+      }
+
+      .terminal-title {
+        font-size: 12px;
+      }
+
       .terminal-body {
-        height: 72vh;
+        height: calc(100vh - 118px);
+        min-height: 480px;
+        padding: 12px;
+      }
+
+      .line {
+        margin-bottom: 8px;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      .input-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+
+      .prompt {
+        font-size: 13px;
+        line-height: 1.4;
+        word-break: break-all;
+      }
+
+      .command-input {
+        font-size: 15px;
+        padding: 2px 0;
+      }
+
+      .autocomplete {
+        left: 0;
+        right: 0;
+        width: 100%;
+        bottom: calc(100% + 6px);
+        border-radius: 8px;
       }
 
       .autocomplete-item,
@@ -338,16 +473,18 @@
         grid-template-columns: 1fr;
       }
 
-      .autocomplete {
-        width: min(320px, calc(100vw - 56px));
+      .autocomplete-item {
+        gap: 4px;
+        padding: 10px;
       }
 
+      /* 手机端：表格变终端风格卡片 */
       .data-table,
       .data-table thead,
       .data-table tbody,
+      .data-table tr,
       .data-table th,
-      .data-table td,
-      .data-table tr {
+      .data-table td {
         display: block;
         width: 100%;
       }
@@ -356,14 +493,44 @@
         display: none;
       }
 
+      .data-table tbody {
+        display: grid;
+        gap: 10px;
+      }
+
       .data-table tr {
-        padding: 8px 0;
-        border-bottom: 1px solid #30363d;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background:
+          linear-gradient(180deg, rgba(121, 192, 255, 0.04), rgba(121, 192, 255, 0.01)),
+          var(--panel-2);
+        padding: 10px 12px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
       }
 
       .data-table td {
-        border-bottom: none;
-        padding: 4px 0;
+        border: none;
+        padding: 0;
+        margin: 0 0 8px 0;
+      }
+
+      .data-table td:last-child {
+        margin-bottom: 0;
+      }
+
+      .data-table td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--green);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .data-table td:first-child {
+        color: var(--blue);
+        font-weight: 700;
       }
     }
   </style>
@@ -473,6 +640,70 @@
         '}'
     };
 
+    var commandConfig = {
+      name: {
+        type: 'text',
+        description: 'Show profile name',
+        data: 'Your Name'
+      },
+      about: {
+        type: 'text',
+        description: 'Show a short profile introduction',
+        data: 'A terminal-style personal homepage template for showcasing projects, background, and references.'
+      },
+      contact: {
+        type: 'table',
+        description: 'Show public contact links',
+        headers: ['PLATFORM', 'LINK'],
+        data: [
+          ['GitHub', CONFIG.projectUrl],
+          ['Website', 'https://your-site.example']
+        ]
+      },
+      projects: {
+        type: 'table',
+        description: 'Show selected projects',
+        headers: ['PROJECT', 'DETAIL'],
+        data: [
+          ['Terminal Personal Homepage', 'A terminal-inspired personal homepage project.'],
+          ['Command UI', 'Interactive command input, history, and autocomplete.'],
+          ['Profile Showcase', 'Display projects, education, and references in terminal style.']
+        ]
+      },
+      education: {
+        type: 'table',
+        description: 'Show education background',
+        headers: ['DEGREE', 'UNIVERSITY', 'YEARS', 'MAJOR'],
+        data: [
+          ['BSc', 'University Name', '2020-2024', 'Your Major'],
+          ['MSc', 'University Name', '2024-2025', 'Your Major']
+        ]
+      },
+      help: {
+        type: 'table',
+        description: 'Show all commands with descriptions',
+        headers: ['COMMAND', 'DESCRIPTION'],
+        data: getHelpRows
+      },
+      list: {
+        type: 'text',
+        description: 'List all available commands',
+        data: function() {
+          return Object.keys(commandConfig).sort().join('\n');
+        }
+      },
+      ref: {
+        type: 'async-ref',
+        description: 'Parse BibTeX references and show them in reverse chronological order'
+      },
+      clear: {
+        type: 'action',
+        description: 'Clear the terminal output',
+        action: 'clear',
+        silent: true
+      }
+    };
+
     var input = document.getElementById('commandInput');
     var historyEl = document.getElementById('history');
     var terminalBody = document.getElementById('terminalBody');
@@ -510,8 +741,31 @@
       return '<button type="button" class="banner-command" data-command="' + escapeHtml(command) + '">' + escapeHtml(command) + '</button>';
     }
 
+    function renderTableCommand(command) {
+      return '<button type="button" class="table-command" data-command="' + escapeHtml(command) + '">' + escapeHtml(command) + '</button>';
+    }
+
     function renderBannerLink(text, href) {
       return '<a class="banner-link" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(text) + '</a>';
+    }
+
+    function isUrlLike(value) {
+      return /^https?:\/\//i.test(String(value));
+    }
+
+    function renderCellContent(cell, headerName, rowIndex, colIndex) {
+      var value = cell == null ? '' : String(cell);
+      var normalizedHeader = String(headerName || '').trim().toUpperCase();
+
+      if (normalizedHeader === 'COMMAND' && commandConfig[value]) {
+        return renderTableCommand(value);
+      }
+
+      if (isUrlLike(value)) {
+        return renderBannerLink(value, value);
+      }
+
+      return escapeHtml(value);
     }
 
     function renderTable(headers, rows) {
@@ -527,7 +781,7 @@
         html += '<tr>';
         for (var c = 0; c < headers.length; c += 1) {
           var cell = rows[r][c] == null ? '' : rows[r][c];
-          html += '<td>' + escapeHtml(cell) + '</td>';
+          html += '<td data-label="' + escapeHtml(headers[c]) + '">' + renderCellContent(cell, headers[c], r, c) + '</td>';
         }
         html += '</tr>';
       }
@@ -889,70 +1143,6 @@
       }
     }
 
-    var commandConfig = {
-      name: {
-        type: 'text',
-        description: 'Show profile name',
-        data: 'Your Name'
-      },
-      about: {
-        type: 'text',
-        description: 'Show a short profile introduction',
-        data: 'A terminal-style personal homepage template for showcasing projects, background, and references.'
-      },
-      contact: {
-        type: 'table',
-        description: 'Show public contact links',
-        headers: ['PLATFORM', 'LINK'],
-        data: [
-          ['GitHub', CONFIG.projectUrl],
-          ['Website', 'https://your-site.example']
-        ]
-      },
-      projects: {
-        type: 'table',
-        description: 'Show selected projects',
-        headers: ['PROJECT', 'DETAIL'],
-        data: [
-          ['Terminal Personal Homepage', 'A terminal-inspired personal homepage project.'],
-          ['Command UI', 'Interactive command input, history, and autocomplete.'],
-          ['Profile Showcase', 'Display projects, education, and references in terminal style.']
-        ]
-      },
-      education: {
-        type: 'table',
-        description: 'Show education background',
-        headers: ['DEGREE', 'UNIVERSITY', 'YEARS', 'MAJOR'],
-        data: [
-          ['BSc', 'University Name', '2020-2024', 'Your Major'],
-          ['MSc', 'University Name', '2024-2025', 'Your Major']
-        ]
-      },
-      help: {
-        type: 'table',
-        description: 'Show all commands with descriptions',
-        headers: ['COMMAND', 'DESCRIPTION'],
-        data: getHelpRows
-      },
-      list: {
-        type: 'text',
-        description: 'List all available commands',
-        data: function() {
-          return Object.keys(commandConfig).sort().join('\n');
-        }
-      },
-      ref: {
-        type: 'async-ref',
-        description: 'Parse BibTeX references and show them in reverse chronological order'
-      },
-      clear: {
-        type: 'action',
-        description: 'Clear the terminal output',
-        action: 'clear',
-        silent: true
-      }
-    };
-
     function focusCommandInput() {
       input.focus();
       var length = input.value.length;
@@ -971,6 +1161,7 @@
         target.closest('.new-tab-btn') ||
         target.closest('.autocomplete') ||
         target.closest('.banner-command') ||
+        target.closest('.table-command') ||
         target.closest('.banner-link') ||
         target.closest('button') ||
         target.closest('input') ||
@@ -1081,6 +1272,15 @@
       var selected = autocompleteState.items[index];
       setCurrentInputValue(selected.name);
       hideAutocomplete();
+      focusCommandInput();
+    }
+
+    function executeCommand(command) {
+      var terminal = getActiveTerminal();
+      terminal.inputValue = '';
+      input.value = '';
+      hideAutocomplete();
+      handleCommand(command);
       focusCommandInput();
     }
 
@@ -1242,17 +1442,10 @@
     });
 
     terminalBody.addEventListener('click', function(event) {
-      var commandButton = event.target.closest('.banner-command');
+      var commandButton = event.target.closest('.banner-command, .table-command');
       if (commandButton) {
         var command = commandButton.getAttribute('data-command') || '';
-        var terminal = getActiveTerminal();
-        terminal.inputValue = '';
-        input.value = '';
-        hideAutocomplete();
-
-        handleCommand(command);
-
-        focusCommandInput();
+        executeCommand(command);
         return;
       }
     });

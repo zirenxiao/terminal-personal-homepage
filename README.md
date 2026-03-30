@@ -2,6 +2,10 @@
 
 A terminal-style **single HTML file** personal profile webpage with multi-tab support, command-based interaction, autocomplete, configurable commands, and a clean Ubuntu-inspired UI.
 
+## Demo
+
+[My GitHub.io page](https://12z.uk/)
+
 ## Usage
 
 1. Download `index.html`
