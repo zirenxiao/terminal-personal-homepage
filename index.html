@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terminal Profile</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .workspace {
+      width: min(1120px, 100%);
+    }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      background: #11161d;
+      color: #8b949e;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tab.active {
+      background: #21262d;
+      color: #e6edf3;
+    }
+
+    .tab-title {
+      min-width: 56px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      outline: none;
+      user-select: text;
+    }
+
+    .tab-title:focus {
+      background: rgba(121, 192, 255, 0.14);
+    }
+
+    .tab-close {
+      color: #8b949e;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .new-tab-btn {
+      padding: 10px 14px;
+      border: 1px dashed #30363d;
+      border-radius: 10px;
+      background: transparent;
+      color: #8b949e;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .terminal {
+      width: 100%;
+      min-height: 620px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      background: #21262d;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot.red { background: #ff5f56; }
+    .dot.yellow { background: #ffbd2e; }
+    .dot.green { background: #27c93f; }
+
+    .terminal-title {
+      margin-left: 8px;
+      color: #8b949e;
+      font-size: 14px;
+    }
+
+    .terminal-body {
+      padding: 20px;
+      height: 560px;
+      overflow-y: auto;
+      user-select: text;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .terminal-body::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+
+    .line {
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.55;
+      user-select: text;
+    }
+
+    .prompt-line {
+      color: #7ee787;
+    }
+
+    .prompt {
+      color: #7ee787;
+      flex-shrink: 0;
+    }
+
+    .output {
+      color: #e6edf3;
+    }
+
+    .hint {
+      color: #8b949e;
+    }
+
+    .error {
+      color: #ff7b72;
+    }
+
+    .banner-command {
+      display: inline;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #7ee787;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .banner-command:hover {
+      color: #a5f3ad;
+    }
+
+    .banner-command:focus-visible {
+      outline: 1px solid #7ee787;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+
+    .banner-link {
+      color: #79c0ff;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .banner-link:hover {
+      text-decoration: underline;
+    }
+
+    .input-wrapper {
+      position: relative;
+      margin-top: 4px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .command-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e6edf3;
+      font: inherit;
+      font-size: 16px;
+      caret-color: #7ee787;
+      min-width: 0;
+    }
+
+    .autocomplete {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 8px);
+      width: min(420px, calc(100vw - 80px));
+      background: #11161d;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      display: none;
+      z-index: 20;
+    }
+
+    .autocomplete.visible {
+      display: block;
+    }
+
+    .autocomplete-list {
+      max-height: 220px;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .autocomplete-list::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+
+    .autocomplete-item {
+      display: grid;
+      grid-template-columns: minmax(110px, 140px) 1fr;
+      gap: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-top: 1px solid rgba(48, 54, 61, 0.45);
+    }
+
+    .autocomplete-item:first-child {
+      border-top: none;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+      background: #21262d;
+    }
+
+    .autocomplete-name {
+      color: #79c0ff;
+      font-weight: 700;
+    }
+
+    .autocomplete-desc {
+      color: #8b949e;
+      min-width: 0;
+      line-height: 1.4;
+    }
+
+    .cmd {
+      color: #79c0ff;
+      font-weight: 700;
+    }
+
+    .flag {
+      color: #e3b341;
+    }
+
+    .value {
+      color: #d2a8ff;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .data-table th,
+    .data-table td {
+      text-align: left;
+      vertical-align: top;
+      padding: 8px 14px 8px 0;
+      border-bottom: 1px solid #30363d;
+      word-break: break-word;
+    }
+
+    .data-table th {
+      color: #7ee787;
+      font-weight: 700;
+    }
+
+    .data-table td:first-child,
+    .data-table th:first-child {
+      color: #79c0ff;
+    }
+
+    .ref-list {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 10px 12px;
+    }
+
+    .ref-index {
+      color: #79c0ff;
+    }
+
+    .ref-text {
+      color: #e6edf3;
+    }
+
+    @media (max-width: 640px) {
+      .terminal-body {
+        height: 72vh;
+      }
+
+      .autocomplete-item,
+      .ref-list {
+        grid-template-columns: 1fr;
+      }
+
+      .autocomplete {
+        width: min(320px, calc(100vw - 56px));
+      }
+
+      .data-table,
+      .data-table thead,
+      .data-table tbody,
+      .data-table th,
+      .data-table td,
+      .data-table tr {
+        display: block;
+        width: 100%;
+      }
+
+      .data-table thead {
+        display: none;
+      }
+
+      .data-table tr {
+        padding: 8px 0;
+        border-bottom: 1px solid #30363d;
+      }
+
+      .data-table td {
+        border-bottom: none;
+        padding: 4px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="workspace">
+    <div class="tab-bar" id="tabBar"></div>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title" id="terminalTitle">terminal-profile-system — terminal-1</span>
+      </div>
+
+      <div class="terminal-body" id="terminalBody">
+        <div id="history"></div>
+
+        <div class="input-wrapper" id="inputWrapper">
+          <div class="autocomplete" id="autocomplete">
+            <div class="autocomplete-list" id="autocompleteList"></div>
+          </div>
+
+          <div class="input-row" id="inputRow">
+            <span class="prompt">user@terminal-profile:~$</span>
+            <input id="commandInput" class="command-input" type="text" autocomplete="off" spellcheck="false" autofocus />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var CONFIG = {
+      appTitle: 'terminal-profile-system',
+      defaultTabTitlePrefix: 'terminal-',
+      promptText: 'user@terminal-profile:~$',
+      terminalWelcome: 'Welcome to Terminal Profile System v1.0.0 (GNU/Linux profile-shell x86_64)',
+      loginIpApi: 'https://api.ipify.org?format=json',
+      projectUrl: 'https://github.com/zirenxiao/terminal-personal-homepage',
+      enableAutocomplete: true,
+      autocompleteMaxItems: 6,
+      autocompleteOpenOnEmpty: false,
+      enableFocusOnTerminalClick: true,
+      focusClickMoveThreshold: 6,
+      bannerRows: [
+        { type: 'text', content: ' Terminal Profile System is a terminal-style personal homepage framework.' },
+        { type: 'blank' },
+        {
+          type: 'link-line',
+          label: ' * Documentation:',
+          text: 'GitHub Repository',
+          href: 'https://github.com/zirenxiao/terminal-personal-homepage'
+        },
+        {
+          type: 'link-line',
+          label: ' * Source Code:',
+          text: 'terminal-personal-homepage',
+          href: 'https://github.com/zirenxiao/terminal-personal-homepage'
+        },
+        {
+          type: 'link-line',
+          label: ' * Issues:',
+          text: 'Report or track issues on GitHub',
+          href: 'https://github.com/zirenxiao/terminal-personal-homepage/issues'
+        },
+        { type: 'blank' },
+        { type: 'dynamic-login' },
+        { type: 'blank' },
+        {
+          type: 'command-hint',
+          prefix: ' Type ',
+          command: 'help',
+          suffix: ' to see all commands.'
+        },
+        {
+          type: 'command-hint',
+          prefix: ' Type ',
+          command: 'ref',
+          suffix: ' to view references.'
+        },
+        {
+          type: 'command-hint',
+          prefix: ' Type ',
+          command: 'projects',
+          suffix: ' to inspect sample project entries.'
+        },
+        { type: 'blank' }
+      ],
+      bibText:
+        '@article{example2025profile,\n' +
+        '  author = {Example, Alice and Example, Bob},\n' +
+        '  title = {A terminal-inspired personal profile interface},\n' +
+        '  journal = {Journal of Demo Interfaces},\n' +
+        '  year = {2025},\n' +
+        '  volume = {12},\n' +
+        '  number = {3},\n' +
+        '  pages = {101--115}\n' +
+        '}\n\n' +
+        '@inproceedings{example2024navigation,\n' +
+        '  author = {Example, Alice and Example, Bob},\n' +
+        '  title = {Interactive personal websites with command-driven navigation},\n' +
+        '  booktitle = {Proceedings of Web UX Systems},\n' +
+        '  year = {2024},\n' +
+        '  pages = {44--52}\n' +
+        '}'
+    };
+
+    var input = document.getElementById('commandInput');
+    var historyEl = document.getElementById('history');
+    var terminalBody = document.getElementById('terminalBody');
+    var tabBar = document.getElementById('tabBar');
+    var terminalTitle = document.getElementById('terminalTitle');
+    var inputRow = document.getElementById('inputRow');
+    var inputWrapper = document.getElementById('inputWrapper');
+    var autocompleteEl = document.getElementById('autocomplete');
+    var autocompleteListEl = document.getElementById('autocompleteList');
+
+    var loginIp = 'fetching...';
+    var autocompleteState = {
+      items: [],
+      selectedIndex: -1
+    };
+    var terminalPointerDown = null;
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function highlightCommandText(text) {
+      return escapeHtml(text)
+        .replace(/(^|\s)(--[a-zA-Z-]+)/g, '$1<span class="flag">$2</span>')
+        .replace(/(^|\s)(-[a-zA-Z])/g, '$1<span class="flag">$2</span>')
+        .replace(/^(\S+)/, '<span class="cmd">$1</span>');
+    }
+
+    function renderBannerCommand(command) {
+      return '<button type="button" class="banner-command" data-command="' + escapeHtml(command) + '">' + escapeHtml(command) + '</button>';
+    }
+
+    function renderBannerLink(text, href) {
+      return '<a class="banner-link" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(text) + '</a>';
+    }
+
+    function renderTable(headers, rows) {
+      var html = '<table class="data-table"><thead><tr>';
+
+      for (var i = 0; i < headers.length; i += 1) {
+        html += '<th>' + escapeHtml(headers[i]) + '</th>';
+      }
+
+      html += '</tr></thead><tbody>';
+
+      for (var r = 0; r < rows.length; r += 1) {
+        html += '<tr>';
+        for (var c = 0; c < headers.length; c += 1) {
+          var cell = rows[r][c] == null ? '' : rows[r][c];
+          html += '<td>' + escapeHtml(cell) + '</td>';
+        }
+        html += '</tr>';
+      }
+
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function parseBibEntries(text) {
+      var blocks = text.split(/\n@/);
+      var items = [];
+
+      for (var i = 0; i < blocks.length; i += 1) {
+        var block = blocks[i].trim();
+        if (!block) continue;
+        if (block.charAt(0) !== '@') block = '@' + block;
+
+        var yearMatch = block.match(/year\s*=\s*\{?(\d{4})\}?/i);
+        var titleMatch = block.match(/title\s*=\s*\{([\s\S]*?)\}\s*,/i);
+        var authorMatch = block.match(/author\s*=\s*\{([\s\S]*?)\}\s*,/i);
+        var journalMatch = block.match(/journal\s*=\s*\{([\s\S]*?)\}\s*,/i);
+        var bookMatch = block.match(/booktitle\s*=\s*\{([\s\S]*?)\}\s*,/i);
+        var volumeMatch = block.match(/volume\s*=\s*\{([\s\S]*?)\}\s*,/i);
+        var numberMatch = block.match(/number\s*=\s*\{([\s\S]*?)\}\s*,/i);
+        var pagesMatch = block.match(/pages\s*=\s*\{([\s\S]*?)\}\s*,?/i);
+
+        var year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
+        var authors = authorMatch ? authorMatch[1].replace(/\s+and\s+/gi, ', ') : 'Unknown author';
+        var title = titleMatch ? titleMatch[1] : 'Untitled';
+        var venue = journalMatch ? journalMatch[1] : (bookMatch ? bookMatch[1] : 'Unknown venue');
+        var extra = [];
+
+        if (volumeMatch) extra.push(volumeMatch[1]);
+        if (numberMatch) extra.push('(' + numberMatch[1] + ')');
+        if (pagesMatch) extra.push(pagesMatch[1]);
+
+        items.push({
+          year: year,
+          text: authors + ' (' + year + '). ' + title + '. ' + venue + (extra.length ? ', ' + extra.join(', ') : '') + '.'
+        });
+      }
+
+      items.sort(function(a, b) {
+        return b.year - a.year;
+      });
+
+      return items;
+    }
+
+    function buildReferenceList() {
+      var refs = parseBibEntries(CONFIG.bibText);
+      var html = '<div class="ref-list">';
+
+      for (var i = 0; i < refs.length; i += 1) {
+        html += '<div class="ref-index">[' + (i + 1) + ']</div>';
+        html += '<div class="ref-text">' + escapeHtml(refs[i].text) + '</div>';
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function getBannerEntries() {
+      var now = new Date().toLocaleString('en-GB');
+      var result = [
+        {
+          type: 'html',
+          className: 'output',
+          content: '<span class="output">' + escapeHtml(CONFIG.terminalWelcome) + '</span>'
+        }
+      ];
+
+      for (var i = 0; i < CONFIG.bannerRows.length; i += 1) {
+        var row = CONFIG.bannerRows[i];
+
+        if (row.type === 'blank') {
+          result.push({ type: 'html', className: 'hint', content: '&nbsp;' });
+          continue;
+        }
+
+        if (row.type === 'text') {
+          result.push({
+            type: 'html',
+            className: 'hint',
+            content: escapeHtml(row.content)
+          });
+          continue;
+        }
+
+        if (row.type === 'link-line') {
+          result.push({
+            type: 'html',
+            className: 'hint',
+            content: escapeHtml(row.label + ' ') + renderBannerLink(row.text, row.href)
+          });
+          continue;
+        }
+
+        if (row.type === 'dynamic-login') {
+          result.push({
+            type: 'html',
+            className: 'hint',
+            content: ' Last session: ' + escapeHtml(now) + ' from <span class="value">' + escapeHtml(loginIp) + '</span>'
+          });
+          continue;
+        }
+
+        if (row.type === 'command-hint') {
+          result.push({
+            type: 'html',
+            className: 'hint',
+            content: escapeHtml(row.prefix) + renderBannerCommand(row.command) + escapeHtml(row.suffix)
+          });
+        }
+      }
+
+      return result;
+    }
+
+    function createTerminalState(id) {
+      return {
+        id: id,
+        title: CONFIG.defaultTabTitlePrefix + id,
+        bodyEntries: [],
+        inputValue: '',
+        commandHistory: [],
+        historyIndex: 0,
+        draftInput: ''
+      };
+    }
+
+    var terminals = [createTerminalState(1)];
+    var activeTerminalId = 1;
+    var nextTerminalId = 2;
+
+    function getActiveTerminal() {
+      for (var i = 0; i < terminals.length; i += 1) {
+        if (terminals[i].id === activeTerminalId) return terminals[i];
+      }
+      return terminals[0];
+    }
+
+    function getTerminalById(id) {
+      for (var i = 0; i < terminals.length; i += 1) {
+        if (terminals[i].id === id) return terminals[i];
+      }
+      return null;
+    }
+
+    function getRenderedEntries(terminal) {
+      return getBannerEntries().concat(terminal.bodyEntries);
+    }
+
+    function appendEntry(entry) {
+      var line = document.createElement('div');
+      line.className = 'line ' + (entry.className || 'output');
+      if (entry.type === 'html') {
+        line.innerHTML = entry.content;
+      } else {
+        line.textContent = entry.content;
+      }
+      historyEl.appendChild(line);
+    }
+
+    function renderHistory() {
+      var terminal = getActiveTerminal();
+      var entries = getRenderedEntries(terminal);
+      historyEl.innerHTML = '';
+
+      for (var i = 0; i < entries.length; i += 1) {
+        appendEntry(entries[i]);
+      }
+
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    function renderTabs() {
+      tabBar.innerHTML = '';
+
+      for (var i = 0; i < terminals.length; i += 1) {
+        (function(terminal) {
+          var tab = document.createElement('div');
+          tab.className = 'tab' + (terminal.id === activeTerminalId ? ' active' : '');
+
+          var title = document.createElement('span');
+          title.className = 'tab-title';
+          title.contentEditable = 'true';
+          title.spellcheck = false;
+          title.textContent = terminal.title;
+
+          title.addEventListener('mousedown', function(event) {
+            event.stopPropagation();
+          });
+
+          title.addEventListener('click', function(event) {
+            event.stopPropagation();
+          });
+
+          title.addEventListener('focus', function() {
+            activeTerminalId = terminal.id;
+            terminalTitle.textContent = CONFIG.appTitle + ' — ' + terminal.title;
+            renderTabs();
+          });
+
+          title.addEventListener('input', function() {
+            terminal.title = title.textContent.trim() || (CONFIG.defaultTabTitlePrefix + terminal.id);
+            terminalTitle.textContent = CONFIG.appTitle + ' — ' + terminal.title;
+          });
+
+          title.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              title.blur();
+            }
+          });
+
+          title.addEventListener('blur', function() {
+            terminal.title = title.textContent.trim() || (CONFIG.defaultTabTitlePrefix + terminal.id);
+            renderTabs();
+          });
+
+          tab.addEventListener('click', function() {
+            activeTerminalId = terminal.id;
+            renderActiveTerminal();
+            focusCommandInput();
+          });
+
+          tab.appendChild(title);
+
+          if (terminals.length > 1) {
+            var close = document.createElement('span');
+            close.className = 'tab-close';
+            close.textContent = '×';
+            close.addEventListener('click', function(event) {
+              event.stopPropagation();
+              closeTab(terminal.id);
+            });
+            tab.appendChild(close);
+          }
+
+          tabBar.appendChild(tab);
+        })(terminals[i]);
+      }
+
+      var addBtn = document.createElement('button');
+      addBtn.className = 'new-tab-btn';
+      addBtn.textContent = '+ New Terminal';
+      addBtn.addEventListener('click', createNewTab);
+      tabBar.appendChild(addBtn);
+    }
+
+    function renderActiveTerminal() {
+      var terminal = getActiveTerminal();
+      terminalTitle.textContent = CONFIG.appTitle + ' — ' + terminal.title;
+      input.value = terminal.inputValue;
+      renderTabs();
+      renderHistory();
+      hideAutocomplete();
+    }
+
+    function createNewTab() {
+      var terminal = createTerminalState(nextTerminalId);
+      nextTerminalId += 1;
+      terminals.push(terminal);
+      activeTerminalId = terminal.id;
+      renderActiveTerminal();
+      focusCommandInput();
+    }
+
+    function closeTab(id) {
+      if (terminals.length === 1) return;
+
+      for (var i = 0; i < terminals.length; i += 1) {
+        if (terminals[i].id === id) {
+          terminals.splice(i, 1);
+          break;
+        }
+      }
+
+      if (!getTerminalById(activeTerminalId)) {
+        activeTerminalId = terminals[0].id;
+      }
+
+      renderActiveTerminal();
+      focusCommandInput();
+    }
+
+    function pushBodyEntry(entry) {
+      var terminal = getActiveTerminal();
+      terminal.bodyEntries.push(entry);
+      appendEntry(entry);
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    function setCurrentInputValue(value) {
+      var terminal = getActiveTerminal();
+      terminal.inputValue = value;
+      input.value = value;
+      updateAutocomplete();
+    }
+
+    function clearTerminal() {
+      var terminal = getActiveTerminal();
+      terminal.bodyEntries = [];
+      renderHistory();
+    }
+
+    function getHelpRows() {
+      var entries = Object.keys(commandConfig).sort();
+      var rows = [];
+
+      for (var i = 0; i < entries.length; i += 1) {
+        var name = entries[i];
+        rows.push([name, commandConfig[name].description]);
+      }
+
+      return rows;
+    }
+
+    function resolveCommandData(command) {
+      if (!command) return null;
+      if (typeof command.data === 'function') return command.data();
+      return command.data;
+    }
+
+    function getCommandRenderResult(commandName) {
+      var command = commandConfig[commandName];
+      if (!command) return null;
+
+      if (command.type === 'text') {
+        return {
+          type: 'text',
+          content: resolveCommandData(command)
+        };
+      }
+
+      if (command.type === 'table') {
+        return {
+          type: 'html',
+          content: renderTable(command.headers, resolveCommandData(command))
+        };
+      }
+
+      if (command.type === 'async-ref') {
+        return {
+          type: 'html',
+          content: buildReferenceList()
+        };
+      }
+
+      return null;
+    }
+
+    function runCommandAction(command) {
+      if (!command || command.type !== 'action') return;
+
+      if (command.action === 'clear') {
+        clearTerminal();
+      }
+    }
+
+    var commandConfig = {
+      name: {
+        type: 'text',
+        description: 'Show profile name',
+        data: 'Your Name'
+      },
+      about: {
+        type: 'text',
+        description: 'Show a short profile introduction',
+        data: 'A terminal-style personal homepage template for showcasing projects, background, and references.'
+      },
+      contact: {
+        type: 'table',
+        description: 'Show public contact links',
+        headers: ['PLATFORM', 'LINK'],
+        data: [
+          ['GitHub', CONFIG.projectUrl],
+          ['Website', 'https://your-site.example']
+        ]
+      },
+      projects: {
+        type: 'table',
+        description: 'Show selected projects',
+        headers: ['PROJECT', 'DETAIL'],
+        data: [
+          ['Terminal Personal Homepage', 'A terminal-inspired personal homepage project.'],
+          ['Command UI', 'Interactive command input, history, and autocomplete.'],
+          ['Profile Showcase', 'Display projects, education, and references in terminal style.']
+        ]
+      },
+      education: {
+        type: 'table',
+        description: 'Show education background',
+        headers: ['DEGREE', 'UNIVERSITY', 'YEARS', 'MAJOR'],
+        data: [
+          ['BSc', 'University Name', '2020-2024', 'Your Major'],
+          ['MSc', 'University Name', '2024-2025', 'Your Major']
+        ]
+      },
+      help: {
+        type: 'table',
+        description: 'Show all commands with descriptions',
+        headers: ['COMMAND', 'DESCRIPTION'],
+        data: getHelpRows
+      },
+      list: {
+        type: 'text',
+        description: 'List all available commands',
+        data: function() {
+          return Object.keys(commandConfig).sort().join('\n');
+        }
+      },
+      ref: {
+        type: 'async-ref',
+        description: 'Parse BibTeX references and show them in reverse chronological order'
+      },
+      clear: {
+        type: 'action',
+        description: 'Clear the terminal output',
+        action: 'clear',
+        silent: true
+      }
+    };
+
+    function focusCommandInput() {
+      input.focus();
+      var length = input.value.length;
+      try {
+        input.setSelectionRange(length, length);
+      } catch (error) {}
+    }
+
+    function isInteractiveTarget(target) {
+      if (!target) return false;
+      return Boolean(
+        target.closest('.command-input') ||
+        target.closest('.tab') ||
+        target.closest('.tab-title') ||
+        target.closest('.tab-close') ||
+        target.closest('.new-tab-btn') ||
+        target.closest('.autocomplete') ||
+        target.closest('.banner-command') ||
+        target.closest('.banner-link') ||
+        target.closest('button') ||
+        target.closest('input') ||
+        target.closest('a')
+      );
+    }
+
+    function hasSelectedText() {
+      var selection = window.getSelection();
+      return selection && String(selection).trim().length > 0;
+    }
+
+    function getAutocompleteItems(query) {
+      var allNames = Object.keys(commandConfig).sort();
+      var normalized = query.trim().toLowerCase();
+
+      if (!CONFIG.enableAutocomplete) return [];
+
+      if (!normalized && !CONFIG.autocompleteOpenOnEmpty) {
+        return [];
+      }
+
+      var startsWithMatches = [];
+      var containsMatches = [];
+
+      for (var i = 0; i < allNames.length; i += 1) {
+        var name = allNames[i];
+        var desc = commandConfig[name].description;
+        var lowerName = name.toLowerCase();
+
+        if (!normalized) {
+          startsWithMatches.push({ name: name, description: desc });
+          continue;
+        }
+
+        if (lowerName.indexOf(normalized) === 0) {
+          startsWithMatches.push({ name: name, description: desc });
+        } else if (lowerName.indexOf(normalized) !== -1) {
+          containsMatches.push({ name: name, description: desc });
+        }
+      }
+
+      return startsWithMatches.concat(containsMatches).slice(0, CONFIG.autocompleteMaxItems);
+    }
+
+    function hideAutocomplete() {
+      autocompleteState.items = [];
+      autocompleteState.selectedIndex = -1;
+      autocompleteEl.classList.remove('visible');
+      autocompleteListEl.innerHTML = '';
+    }
+
+    function scrollActiveAutocompleteItemIntoView() {
+      var activeItem = autocompleteListEl.querySelector('.autocomplete-item.active');
+      if (activeItem && typeof activeItem.scrollIntoView === 'function') {
+        activeItem.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function renderAutocomplete() {
+      if (!autocompleteState.items.length) {
+        hideAutocomplete();
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < autocompleteState.items.length; i += 1) {
+        var item = autocompleteState.items[i];
+        html +=
+          '<div class="autocomplete-item' + (i === autocompleteState.selectedIndex ? ' active' : '') + '" data-index="' + i + '">' +
+            '<div class="autocomplete-name">' + escapeHtml(item.name) + '</div>' +
+            '<div class="autocomplete-desc">' + escapeHtml(item.description) + '</div>' +
+          '</div>';
+      }
+
+      autocompleteListEl.innerHTML = html;
+      autocompleteEl.classList.add('visible');
+      scrollActiveAutocompleteItemIntoView();
+    }
+
+    function updateAutocomplete() {
+      var value = input.value || '';
+      var terminal = getActiveTerminal();
+      terminal.inputValue = value;
+
+      if (!CONFIG.enableAutocomplete) {
+        hideAutocomplete();
+        return;
+      }
+
+      if (!value.trim()) {
+        hideAutocomplete();
+        return;
+      }
+
+      if (/\s/.test(value.trim())) {
+        hideAutocomplete();
+        return;
+      }
+
+      autocompleteState.items = getAutocompleteItems(value);
+      autocompleteState.selectedIndex = autocompleteState.items.length ? 0 : -1;
+      renderAutocomplete();
+    }
+
+    function applyAutocompleteSelection(index) {
+      if (index < 0 || index >= autocompleteState.items.length) return;
+      var selected = autocompleteState.items[index];
+      setCurrentInputValue(selected.name);
+      hideAutocomplete();
+      focusCommandInput();
+    }
+
+    function handleCommand(rawCommand) {
+      pushBodyEntry({
+        type: 'html',
+        className: 'prompt-line',
+        content: escapeHtml(CONFIG.promptText) + ' ' + highlightCommandText(rawCommand)
+      });
+
+      var commandText = rawCommand.trim();
+
+      if (!commandText) {
+        pushBodyEntry({ type: 'text', className: 'output', content: '' });
+        return;
+      }
+
+      var terminal = getActiveTerminal();
+      terminal.commandHistory.push(commandText);
+      terminal.historyIndex = terminal.commandHistory.length;
+      terminal.draftInput = '';
+
+      var parts = commandText.split(/\s+/);
+      var baseCommand = parts[0];
+      var flags = parts.slice(1);
+      var command = commandConfig[baseCommand];
+
+      if (!command) {
+        pushBodyEntry({
+          type: 'html',
+          className: 'error',
+          content: '<span class="error">Command not found:</span> ' + escapeHtml(commandText)
+        });
+        return;
+      }
+
+      if (flags.indexOf('--help') !== -1 || flags.indexOf('-h') !== -1) {
+        pushBodyEntry({ type: 'text', className: 'output', content: command.description });
+        return;
+      }
+
+      if (command.type === 'action') {
+        runCommandAction(command);
+        if (!command.silent) {
+          pushBodyEntry({ type: 'text', className: 'output', content: '' });
+        }
+        return;
+      }
+
+      var renderResult = getCommandRenderResult(baseCommand);
+
+      if (!renderResult) {
+        pushBodyEntry({
+          type: 'html',
+          className: 'error',
+          content: '<span class="error">Unsupported command type:</span> ' + escapeHtml(command.type || 'unknown')
+        });
+        return;
+      }
+
+      pushBodyEntry({
+        type: renderResult.type,
+        className: 'output',
+        content: renderResult.content
+      });
+    }
+
+    input.addEventListener('input', function() {
+      getActiveTerminal().inputValue = input.value;
+      updateAutocomplete();
+    });
+
+    input.addEventListener('keydown', function(event) {
+      var terminal = getActiveTerminal();
+
+      if (event.key === 'Tab') {
+        if (autocompleteState.items.length) {
+          event.preventDefault();
+          applyAutocompleteSelection(
+            autocompleteState.selectedIndex >= 0 ? autocompleteState.selectedIndex : 0
+          );
+        }
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        if (autocompleteState.items.length && autocompleteEl.classList.contains('visible')) {
+          event.preventDefault();
+          autocompleteState.selectedIndex =
+            autocompleteState.selectedIndex <= 0
+              ? autocompleteState.items.length - 1
+              : autocompleteState.selectedIndex - 1;
+          renderAutocomplete();
+          return;
+        }
+
+        event.preventDefault();
+        if (!terminal.commandHistory.length) return;
+        if (terminal.historyIndex === terminal.commandHistory.length) {
+          terminal.draftInput = input.value;
+        }
+        terminal.historyIndex = Math.max(0, terminal.historyIndex - 1);
+        setCurrentInputValue(terminal.commandHistory[terminal.historyIndex] || '');
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        if (autocompleteState.items.length && autocompleteEl.classList.contains('visible')) {
+          event.preventDefault();
+          autocompleteState.selectedIndex =
+            autocompleteState.selectedIndex >= autocompleteState.items.length - 1
+              ? 0
+              : autocompleteState.selectedIndex + 1;
+          renderAutocomplete();
+          return;
+        }
+
+        event.preventDefault();
+        if (!terminal.commandHistory.length) return;
+        terminal.historyIndex = Math.min(terminal.commandHistory.length, terminal.historyIndex + 1);
+        if (terminal.historyIndex === terminal.commandHistory.length) {
+          setCurrentInputValue(terminal.draftInput || '');
+        } else {
+          setCurrentInputValue(terminal.commandHistory[terminal.historyIndex] || '');
+        }
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        hideAutocomplete();
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        if (autocompleteState.items.length && autocompleteEl.classList.contains('visible') && autocompleteState.selectedIndex >= 0) {
+          event.preventDefault();
+          applyAutocompleteSelection(autocompleteState.selectedIndex);
+          return;
+        }
+
+        var commandText = input.value;
+        terminal.inputValue = '';
+        input.value = '';
+        hideAutocomplete();
+        handleCommand(commandText);
+      }
+    });
+
+    autocompleteEl.addEventListener('mousedown', function(event) {
+      event.preventDefault();
+      var item = event.target.closest('.autocomplete-item');
+      if (!item) return;
+      var index = parseInt(item.getAttribute('data-index'), 10);
+      applyAutocompleteSelection(index);
+    });
+
+    inputRow.addEventListener('click', function() {
+      focusCommandInput();
+    });
+
+    terminalBody.addEventListener('click', function(event) {
+      var commandButton = event.target.closest('.banner-command');
+      if (commandButton) {
+        var command = commandButton.getAttribute('data-command') || '';
+        var terminal = getActiveTerminal();
+        terminal.inputValue = '';
+        input.value = '';
+        hideAutocomplete();
+
+        handleCommand(command);
+
+        focusCommandInput();
+        return;
+      }
+    });
+
+    terminalBody.addEventListener('mousedown', function(event) {
+      terminalPointerDown = {
+        x: event.clientX,
+        y: event.clientY,
+        interactive: isInteractiveTarget(event.target)
+      };
+    });
+
+    terminalBody.addEventListener('click', function(event) {
+      if (!CONFIG.enableFocusOnTerminalClick) return;
+      if (!terminalPointerDown) return;
+      if (terminalPointerDown.interactive || isInteractiveTarget(event.target)) return;
+      if (hasSelectedText()) return;
+
+      var dx = Math.abs(event.clientX - terminalPointerDown.x);
+      var dy = Math.abs(event.clientY - terminalPointerDown.y);
+
+      if (dx > CONFIG.focusClickMoveThreshold || dy > CONFIG.focusClickMoveThreshold) {
+        return;
+      }
+
+      focusCommandInput();
+    });
+
+    document.addEventListener('click', function(event) {
+      if (!inputWrapper.contains(event.target)) {
+        hideAutocomplete();
+      }
+    });
+
+    function refreshAllTerminals() {
+      renderActiveTerminal();
+    }
+
+    function fetchLoginIp() {
+      fetch(CONFIG.loginIpApi)
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          if (data && data.ip) {
+            loginIp = data.ip;
+            refreshAllTerminals();
+          }
+        })
+        .catch(function() {
+          loginIp = 'unavailable';
+          refreshAllTerminals();
+        });
+    }
+
+    renderActiveTerminal();
+    fetchLoginIp();
+    focusCommandInput();
+  </script>
+</body>
+</html>
